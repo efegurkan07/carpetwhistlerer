@@ -2,18 +2,6 @@
 
 public class InGameScreen : MonoBehaviour {
 
-	public static InGameScreen instance;
-
-	void Awake()
-	{
-		// Enforce singleton
-		if (instance == null) 
-			instance = this;
-		else if (instance != this)
-			Destroy (gameObject);
-	}// end of awake function
-
-
     // Update is called once per frame
     void Update()
     {

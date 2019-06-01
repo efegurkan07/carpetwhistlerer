@@ -20,9 +20,7 @@ public class ScreenManager : MonoBehaviour {
 		if (instance == null) 			// Check if instance already exists
 			instance = this; 			// if not, set instance to "this"
 		else if (instance != this)		// If instance already exists and it's not this:
-			Destroy (gameObject);    		// Then destroy this. Enforces the singleton pattern. ??? intance or game obj? efeee
-
-		DontDestroyOnLoad (instance); 	//Sets this to not be destroyed when reloading scene
+			Destroy (gameObject);    		// Then destroy this. Enforces the singleton pattern.
 	}
 
 	// Use this for initialization
@@ -40,7 +38,6 @@ public class ScreenManager : MonoBehaviour {
 		// if we are already at this state, return.
 		if (current == newState) 
 		{
-			print ("you are already at " + newState.ToString () + " state."); 
 			return;
 		}
 
@@ -56,11 +53,7 @@ public class ScreenManager : MonoBehaviour {
                     temp.SetActive(false);
                 }
             }
-            instance.current = newState;
-        }
-        else
-        {
-            print("No such state! State : " + newState );
+            current = newState;
         }
 	}//end of function StateChange
 		

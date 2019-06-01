@@ -4,33 +4,38 @@ using UnityEngine;
 // This script controls the player's interactions with the world and it's statistics
 public class Player : MonoBehaviour 
 {
-	// Player object
-	public static Player instance;		// This is the player object. Place it in the inspector, ON THE CARPET RIDER. edit: game object idi (Player) playerscript yaptim. 
 
-	// Variables
-	public const int MaxLives = 2;					// max number of lives the player has.
-	public int remainingLives;						// current number of lives the player has.
-	public bool isInvincible; 						// set to true to prevent player from taking damage
+    int score;                       // this is the player's score.
+    public int Score {
+        get {
+            return score;
+        }
+    }   
+
+    int remainingLives;						// current number of lives the player has.
+    public int RemainingLives {
+        get {
+            return remainingLives;
+        }
+    }
+	bool isInvincible = false; 						// set to true to prevent player from taking damage
 
     SpriteRenderer spriteRenderer;
+    PlayerMovement movement;
 
-	void Awake()									// Initialize the reference to this.
-	{
-		if (instance == null) 
-			instance = this;
-		else if (instance != this)
-			Destroy (gameObject);
-	}
+    void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        movement = GetComponent<PlayerMovement>();
+    }
 
     // Refresh Player
     public void RefreshPlayer()
 	{
-		this.remainingLives = MaxLives; 	// Player begins with max lives. 
-		this.isInvincible = false; 		// default = not invincible.
-		GameManager.instance.livesText.text = remainingLives.ToString ();	// Display remaining lives = max lives.
-		PlayerMovement.instance.ResetPosition ();
-        spriteRenderer = GetComponent<SpriteRenderer>();
-
+		remainingLives = GameManager.MaxLives; 	// Player begins with max lives. 
+		isInvincible = false; 		// default = not invincible.
+        movement.ResetPosition ();
+        score = 0;
     }// end of refresh player
 
 
@@ -49,26 +54,19 @@ public class Player : MonoBehaviour
 			{
 				StartCoroutine (PlayerDamaged ());					// Make the player invulnarable for a duration and blink.
                 StartCoroutine(PlayerBlink());
-				GameManager.instance.livesText.text = remainingLives.ToString ();	// Update the remaining lives at UI todo: bu variable'lari inGameUI'a tasi. 
-			} 
-			else 													// If the player has no more lives remaining; kill it.
-			{
-				GameManager.instance.GameOver (); 	// Start the game over routine.	
 			} 
 		}
 	}// end of take damage
 
-    void IncreaseLife ()
+    void IncreaseLife()
     {
-        remainingLives++;                                   // PLUS HEALTH!
-        GameManager.instance.livesText.text = Player.instance.remainingLives.ToString();	// update remaining lives = max lives.
+        remainingLives++;
     }
 
     void IncreasePoints()
     {
-        GameManager.instance.GainScore(10);			// Increase the player's score by 10
+        score += GameManager.instance.pickupReward;			// Increase the player's score by 10
     }
-
 
 	// Blink the player and make it invincible for the duration 
 	// Render the player invincible throughout the process.
@@ -80,7 +78,6 @@ public class Player : MonoBehaviour
 		isInvincible = true; // Render player invincible while he is blinking
 		yield return waitInvincible;
 		isInvincible = false; // finish the invincibility period.
-		yield return wfeof;
 	}// end of player damaged
 
     IEnumerator PlayerBlink()

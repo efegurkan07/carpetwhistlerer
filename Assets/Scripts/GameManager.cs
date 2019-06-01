@@ -4,10 +4,12 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-	public static GameManager instance = null;  
-    
+	public static GameManager instance = null;
+
+    public Player player;
+
     // Coroutine Varianbles
-	public WaitForEndOfFrame wfeof = new WaitForEndOfFrame ();	// wfeof is used in obstacles and other stuff.
+	public readonly WaitForEndOfFrame wfeof = new WaitForEndOfFrame ();	// wfeof is used in obstacles and other stuff.
 
     IEnumerator pickupSpawnCoroutine;
     IEnumerator healthSpawnCoroutine;
@@ -17,7 +19,9 @@ public class GameManager : MonoBehaviour
 	public float gameStartingTime = 0f;
 	public bool isPlaying;											    // True during game/ingame state. false otherwise.
 	public static int HighScore = 0; 							        // Updated by PlayerPrefs "HighScore".
-	public int score;                                                   // this is the player's score.
+    public const int MaxLives = 2;					// max number of lives the player has.
+
+    public int pickupReward = 10;
 
     public float minimumPickupSpawnRate = 5f;
     public float maximumPickupSpawnRate = 15f;
@@ -35,10 +39,6 @@ public class GameManager : MonoBehaviour
 
     // Misc
     public AudioClip bgMusic;                   // Background music todo fix name and music
-    public AudioClip hit; 						// When the player hits an obstacle, this will play.
-    public GameObject noteAnimation;            // Nota animasyonu todo fix name
-    public GameObject cube;                     // halinin en ondeki objesi sanirim		
-
 
     //Awake is always called before any Start functions -Unity3D
     void Awake()
@@ -47,7 +47,6 @@ public class GameManager : MonoBehaviour
 			instance = this; 								// if not, set instance to "this"
 		else if (instance != this)							// If instance already exists and it's not this:
 			Destroy(gameObject);    						// Then destroy this. Enforces the singleton pattern.
-		DontDestroyOnLoad(gameObject);                      //Sets this to not be destroyed when reloading scene
 	}
 		
 	void Start()
@@ -62,15 +61,28 @@ public class GameManager : MonoBehaviour
         obstacleSpawnCoroutine = SpawnObstacles();
     }
 
-	// Called at start. & end.
-	public static void ResetGame ()
+    private void Update()
+    {
+        livesText.text = player.RemainingLives.ToString();
+        scoreText.text = player.Score.ToString();
+        if (player.RemainingLives < 1)
+        {
+            GameOver();
+        }
+        if (HighScore < player.Score)
+        {
+            UpdateHighScore();
+        }
+    }
+
+    // Called at start. & end.
+    public void ResetGame ()
 	{
-		instance.isPlaying = false;											// Not in game. in start or something probably.
-		instance.score = 0;											// Set the score to 0 at the beginning of the game.
-		instance.scoreText.text = "0";										// When the player score changes, update the string at UI too.
-		instance.highscoreText.text = "highscore: " + HighScore.ToString();	// Updated only when the high score changes.
-		Player.instance.RefreshPlayer ();                           // Maximise the health etc.
-        PlayerMovement.instance.ResetPosition();                                                    // Resets the player position and movement, at the left of screen. 
+		isPlaying = false;											// Not in game. in start or something probably.
+		scoreText.text = "0";										// When the player score changes, update the string at UI too.
+		highscoreText.text = "highscore: " + HighScore.ToString();	// Updated only when the high score changes.
+		player.RefreshPlayer ();                           // Maximise the health etc.
+        livesText.text = MaxLives.ToString();   // Display remaining lives = max lives.
     }
 		
 	// Called at mainmenuUI to start the game
@@ -80,43 +92,24 @@ public class GameManager : MonoBehaviour
 		ResetGame ();
 		isPlaying = true;  														// For obstacle_manager objects. pause doesnt make it false.
         gameStartingTime = Time.time;                                           // For obstacle creation, speed, etc.
-
+       
         StartFactories();
     }
 		
 	// This function is called by the PlayerScript when the player loses all lives.
 	public void GameOver()
 	{
-		EndGame ();
-		ScreenManager.instance.ChangeState (ScreenManager.screen.GameOver);	// bring gameoverUI.
-		GameOverScreen.instance.GameOver ();
+        isPlaying = false;                                      // make the obstacles & pick ups disappear.
+        StopFactories();
+        ScreenManager.instance.ChangeState (ScreenManager.screen.GameOver);	// bring gameoverUI.
 	}// end of game over.
 
 
-	public void EndGame()
-	{
-		isPlaying = false;                                      // make the obstacles & pick ups disappear.
-        PlayerMovement.instance.ResetPosition();                // Resets the player position and movement, at the left of screen. 
-
-        StopFactories();
-    }
-
-	// Pick-Ups call this function when the player gains points from pick-ups.
-	public void GainScore( int points)
-	{
-		instance.score += points;
-		instance.scoreText.text = instance.score.ToString();	// When the player score changes, update the string at UI too.
-		if (HighScore < instance.score) 
-		{
-			UpdateHighScore ();
-		}
-	}
-
 	private void UpdateHighScore()
 	{
-        HighScore = instance.score;                                                     // Update the highscore attribute.
+        HighScore = player.Score;                                                     // Update the highscore attribute.
         PlayerPrefs.SetInt("HighScore", HighScore);                                     // saves the highscore between sessions.
-        instance.highscoreText.text = "highscore: " + HighScore.ToString();             // Update the HighScore text on screen. 
+        highscoreText.text = "highscore: " + HighScore.ToString();             // Update the HighScore text on screen. 
     }
 
     void StartFactories()

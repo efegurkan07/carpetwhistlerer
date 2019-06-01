@@ -40,7 +40,7 @@ public class MicrophoneAnalyzer : MonoBehaviour
         microphone.Play();
     }
 
-    void Update()
+    void FixedUpdate()
     {
         AnalyzeSound();
     }
@@ -79,7 +79,7 @@ public class MicrophoneAnalyzer : MonoBehaviour
         dbVal = 20 * Mathf.Log10(rmsVal / RefValue); // calculate dB
         if (dbVal < -160) dbVal = -160; // clamp it to -160dB min
                                         // get sound spectrum
-        GetComponent<AudioSource>().GetSpectrumData(_spectrum, 0, FFTWindow.BlackmanHarris);
+        microphone.GetSpectrumData(_spectrum, 0, FFTWindow.BlackmanHarris);
         float maxV = 0;
         int maxN = 0;
         for (i = 0; i < QSamples; i++)
